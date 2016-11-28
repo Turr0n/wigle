@@ -1,3 +1,7 @@
+# About this fork
+
+This project was abandoned 2 years ago and I needed this for some demo so i fixed the code to work with the new wigle API V2. It's a quick hack so it may breaks.
+
 # Wigle
 
 Python interface to wigle APIs. This project is unofficial and may stop working

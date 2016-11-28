@@ -1,6 +1,6 @@
 import requests
 
-WIGLE_ENDPOINT = 'https://wigle.net/api/v1'
+WIGLE_ENDPOINT = 'https://api.wigle.net/api/v2'
 
 # How many entries will be sent from the server at one time. This is hardcoded
 # on the website.
@@ -55,7 +55,7 @@ class Wigle(object):
         self.password = password
         self._auth_cookies = None
 
-    def _wigle_request(self, method, auth=False, **kwargs):
+    def _wigle_request(self, method, isPOST=True, auth=False, **kwargs):
         url = WIGLE_ENDPOINT + '/' + method
         if auth:
             cookies = self._auth_cookies
@@ -64,9 +64,13 @@ class Wigle(object):
         headers = {
             'Accept': 'application/json, text/javascript',
             'User-Agent': 'python wigle client',
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded;',
             }
-        return requests.post(url, cookies=cookies, headers=headers, **kwargs)
+        if (isPOST):
+            return requests.post(url, cookies=cookies, headers=headers, **kwargs)
+        else:
+            return requests.get(url, cookies=cookies, headers=headers, **kwargs)
+
 
     def _authenticated_request(self, method, **kwargs):
         self._ensure_authenticated()
@@ -83,7 +87,7 @@ class Wigle(object):
             'noexpire': 'off',
             'destination': '/',
         }
-        resp = self._unauthenticated_request('jsonLogin', params=auth_data, allow_redirects=False)
+        resp = self._unauthenticated_request('login', params=auth_data, allow_redirects=False)
         if 'auth' in resp.cookies:
             self._auth_cookies = resp.cookies
         else:
@@ -100,7 +104,7 @@ class Wigle(object):
         Returns:
             dict: Description of user.
         """
-        resp = self._authenticated_request('jsonUser')
+        resp = self._authenticated_request('profile/user',isPOST=False)
         info = resp.json()
         return info
 
@@ -149,7 +153,7 @@ class Wigle(object):
         while True:
             if on_new_page:
                 on_new_page(params.get('first', 1))
-            resp = self._authenticated_request('jsonSearch', params=params)
+            resp = self._authenticated_request('network/search', isPOST=False, params=params)
             data = resp.json()
             if not data['success']:
                 raise_wigle_error(data)
