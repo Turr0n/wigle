@@ -2,15 +2,15 @@ from . import Wigle, WigleRatelimitExceeded
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--user', dest='user', type=str, required=True, help='Wigle username')
-parser.add_argument('--pass', dest='password', type=str, required=True, help='Wigle password')
+parser.add_argument('--name', dest='name', type=str, required=True, help='Wigle name')
+parser.add_argument('--token', dest='token', type=str, required=True, help='Wigle token')
 
 
 def user_info():
     parser.description = 'Get Wigle account information'
     args = parser.parse_args()
 
-    info = Wigle(args.user, args.password).get_user_info()
+    info = Wigle(args.name, args.token).get_user_info()
     if not info.get('success'):
         print('Unauthorized to get user info')
     else:
@@ -34,7 +34,7 @@ def search():
         print("Downloading new page (records from %i)" % first)
 
     try:
-        results = Wigle(args.user, args.password).search(
+        results = Wigle(args.name, args.token).search(
             ssid=args.ssid,
             bssid=args.bssid,
             on_new_page=notify_new_page,
