@@ -46,56 +46,24 @@ def raise_wigle_error(data):
 
 
 class Wigle(object):
-    def __init__(self, user, password):
+    def __init__(self, name, token):
         """
         Create a new webservice proxy object. It will authenticate with user
         and password credentials on the first connection attempt.
         """
-        self.user = user
-        self.password = password
-        self._auth_cookies = None
+        self.auth = requests.auth.HTTPBasicAuth(name, token)
 
-    def _wigle_request(self, method, isPOST=True, auth=False, **kwargs):
+    def _wigle_request(self, method, isPOST=True, **kwargs):
         url = WIGLE_ENDPOINT + '/' + method
-        if auth:
-            cookies = self._auth_cookies
-        else:
-            cookies = None
         headers = {
             'Accept': 'application/json, text/javascript',
             'User-Agent': 'python wigle client',
             'Content-Type': 'application/x-www-form-urlencoded;',
             }
         if (isPOST):
-            return requests.post(url, cookies=cookies, headers=headers, **kwargs)
+            return requests.post(url, headers=headers, auth=self.auth, **kwargs)
         else:
-            return requests.get(url, cookies=cookies, headers=headers, **kwargs)
-
-
-    def _authenticated_request(self, method, **kwargs):
-        self._ensure_authenticated()
-        return self._wigle_request(method, auth=True, **kwargs)
-
-    def _unauthenticated_request(self, method, **kwargs):
-        return self._wigle_request(method, auth=False, **kwargs)
-
-    def reauthenticate(self):
-        self._auth_cookies = None
-        auth_data = {
-            'credential_0': self.user,
-            'credential_1': self.password,
-            'noexpire': 'off',
-            'destination': '/',
-        }
-        resp = self._unauthenticated_request('login', params=auth_data, allow_redirects=False)
-        if 'auth' in resp.cookies:
-            self._auth_cookies = resp.cookies
-        else:
-            raise WigleAuthenticationError('Could not authenticate as user %s' % self.user)
-
-    def _ensure_authenticated(self):
-        if not self._auth_cookies:
-            self.reauthenticate()
+            return requests.get(url, headers=headers, auth=self.auth, **kwargs)
 
     def get_user_info(self):
         """
@@ -104,7 +72,7 @@ class Wigle(object):
         Returns:
             dict: Description of user.
         """
-        resp = self._authenticated_request('profile/user',isPOST=False)
+        resp = self._wigle_request('profile/user', isPOST=False)
         info = resp.json()
         return info
 
@@ -133,7 +101,6 @@ class Wigle(object):
         Returns:
             [dict]: list of dicts describing matching wifis
         """
-
         params = {
             'latrange1': lat_range[0] if lat_range else "",
             'latrange2': lat_range[1] if lat_range else "",
@@ -153,7 +120,7 @@ class Wigle(object):
         while True:
             if on_new_page:
                 on_new_page(params.get('first', 1))
-            resp = self._authenticated_request('network/search', isPOST=False, params=params)
+            resp = self._wigle_request('network/search', isPOST=False, params=params)
             data = resp.json()
             if not data['success']:
                 raise_wigle_error(data)
