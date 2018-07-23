@@ -14,7 +14,7 @@ Currently supported operations: authentication, search and user information
 Search supports all the options available via web interface. For example to
 search for APs advertising network "foobar", use:
 
-    wigle = Wigle('username', 'password')
+    wigle = Wigle('name', 'token')
     wigle.search(ssid="foobar")
 
 Paging happens behind the scenes and will pull all results in multiple requests
